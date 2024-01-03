@@ -1,0 +1,4 @@
+__version__ = '0.1.0'
+
+from .modeling import AutoMLXForCausalLM
+from .modeling import MLXCausalLMOutputWithPast
