@@ -3,6 +3,7 @@ import types
 import numpy as np
 import torch
 
+import mlx
 from mlx import core as mx
 from mlx.utils import tree_unflatten
 
@@ -14,7 +15,7 @@ def sample_logits(logits, temperature=1.0, top_p=1.0, top_k=-1):
     if temperature == 0:
         return mx.argmax(logits, axis=-1)
     else:
-        return mx.random.categorical(logits * (1 / temperature))
+        return mx.random.categorical(logits * (1 / temperature), axis=-1)
 
 
 def generate(
@@ -62,6 +63,9 @@ class AutoMLXForCausalLM:
             model_name_or_path,
             model_class
     ):
+        # load model with cache disabled
+        mlx.core.metal.set_cache_enabled(False)
+
         config_file = get_mlx_config_file(model_name_or_path)
         weight_file = get_mlx_weight_file(model_name_or_path)
         with open(config_file, "r") as f:
@@ -69,6 +73,7 @@ class AutoMLXForCausalLM:
         model = model_class(config)
         weights = mx.load(weight_file)
         model.update(tree_unflatten(list(weights.items())))
+        model.eval()
 
         # Add additional attributes to model
         model.device = "mps"
